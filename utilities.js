@@ -1,5 +1,5 @@
-export const PLEYFIELD_COLUMNS = 10;
-export const PLEYFIELD_ROWS = 20;
+export const PLAYFIELD_COLUMNS = 10;
+export const PLAYFIELD_ROWS = 20;
 export const TETROMINO_NAMES = ['I', 'J', 'L', 'O', 'S', 'Z', 'T'];
 export const TETROMINOES = {
 	I: [
@@ -45,7 +45,7 @@ export function getRandomElement(array) {
 }
 
 export function convertPositionToIndex(row, column) {
-	return row * PLEYFIELD_COLUMNS + column;
+	return row * PLAYFIELD_COLUMNS + column;
 }
 
 export function setRotateMatrix(matrix) {
