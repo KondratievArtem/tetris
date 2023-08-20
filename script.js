@@ -4,7 +4,42 @@ import { convertPositionToIndex } from './utilities.js';
 const tetris = new Tetris();
 const cells = document.querySelectorAll('.grid>div');
 
+initKeydown();
 draw();
+
+function initKeydown() {
+	document.addEventListener('keydown', onKeydown);
+}
+
+function onKeydown(event) {
+	switch (event.key) {
+		case 'ArrowDown':
+			moveDown();
+			break;
+		case 'ArrowLeft':
+			moveLeft();
+			break;
+		case 'ArrowRight':
+			moveRight();
+			break;
+
+		default:
+			break;
+	}
+}
+
+function moveDown() {
+	tetris.moveTetrominoDown();
+	draw();
+}
+function moveLeft() {
+	tetris.moveTetrominoLeft();
+	draw();
+}
+function moveRight() {
+	tetris.moveTetrominoRight();
+	draw();
+}
 
 function draw() {
 	cells.forEach((cell) => cell.removeAttribute('class'));
