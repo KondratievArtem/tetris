@@ -1,11 +1,12 @@
 import { Tetris } from './tetris.js';
 import { PLAYFIELD_ROWS, PLAYFIELD_COLUMNS, convertPositionToIndex } from './utilities.js';
-
+let requestId;
+let timeoutId;
 const tetris = new Tetris();
 const cells = document.querySelectorAll('.grid>div');
 
 initKeydown();
-draw();
+moveDown();
 
 function initKeydown() {
 	document.addEventListener('keydown', onKeydown);
@@ -34,6 +35,8 @@ function onKeydown(event) {
 function moveDown() {
 	tetris.moveTetrominoDown();
 	draw();
+	stopLoop();
+	startLoop();
 }
 function moveLeft() {
 	tetris.moveTetrominoLeft();
@@ -46,6 +49,13 @@ function moveRight() {
 function rotate() {
 	tetris.rotateTetromino();
 	draw();
+}
+function startLoop() {
+	timeoutId = setTimeout(() => (requestId = requestAnimationFrame(moveDown)), 700);
+}
+function stopLoop() {
+	cancelAnimationFrame(requestId);
+	clearTimeout(timeoutId);
 }
 
 function draw() {
