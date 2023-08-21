@@ -82,6 +82,34 @@ export class Tetris {
 				this.playfield[this.tetromino.row + row][this.tetromino.column + col] = this.tetromino.name;
 			}
 		}
+		this.processFilledRow();
 		this.generateTetromino();
+	}
+
+	processFilledRow() {
+		const filledLine = this.findFilledRows();
+		this.removeFilledRows(filledLine);
+	}
+	findFilledRows() {
+		const filledRows = [];
+		for (let row = 0; row < PLAYFIELD_ROWS; row++) {
+			if (this.playfield[row].every((cell) => Boolean(cell))) {
+				filledRows.push(row);
+			}
+		}
+		return filledRows;
+	}
+
+	removeFilledRows(filledRows) {
+		filledRows.forEach((row) => {
+			this.dropRowsAbove(row);
+		});
+	}
+
+	dropRowsAbove(rowToDelete) {
+		for (let row = rowToDelete; row > 0; row--) {
+			this.playfield[row] = this.playfield[row - 1];
+		}
+		this.playfield[0] = new Array(PLAYFIELD_COLUMNS).fill(0);
 	}
 }
