@@ -4,6 +4,7 @@ export class Tetris {
 	constructor() {
 		this.playfield;
 		this.tetromino;
+		this.isGameOver = false;
 		this.init();
 	}
 
@@ -28,7 +29,11 @@ export class Tetris {
 			matrix,
 			row,
 			column,
+			ghostColumn: column,
+			ghostRow: row,
 		};
+
+		this.calculateGhostPosition();
 	}
 
 	moveTetrominoDown() {
@@ -41,17 +46,34 @@ export class Tetris {
 
 	moveTetrominoLeft() {
 		this.tetromino.column -= 1;
-		if (!this.isValid()) this.tetromino.column += 1;
+		if (!this.isValid()) {
+			this.tetromino.column += 1;
+		} else {
+			this.calculateGhostPosition();
+		}
 	}
 	moveTetrominoRight() {
 		this.tetromino.column += 1;
-		if (!this.isValid()) this.tetromino.column -= 1;
+		if (!this.isValid()) {
+			this.tetromino.column -= 1;
+		} else {
+			this.calculateGhostPosition();
+		}
 	}
 	rotateTetromino() {
 		const oldMatrix = this.tetromino.matrix;
 		const rotateMatrix = setRotateMatrix(this.tetromino.matrix);
 		this.tetromino.matrix = rotateMatrix;
-		if (!this.isValid()) this.tetromino.matrix = oldMatrix;
+		if (!this.isValid()) {
+			this.tetromino.matrix = oldMatrix;
+		} else {
+			this.calculateGhostPosition();
+		}
+	}
+
+	dropTetrominoDown() {
+		this.tetromino.row = this.tetromino.ghostRow;
+		this.playTetromino();
 	}
 
 	isValid() {
@@ -79,11 +101,19 @@ export class Tetris {
 		for (let row = 0; row < matrixSize; row++) {
 			for (let col = 0; col < matrixSize; col++) {
 				if (!this.tetromino.matrix[row][col]) continue;
+				if (this.isOutsideOfTopBoard(row)) {
+					this.isGameOver = true;
+					return;
+				}
 				this.playfield[this.tetromino.row + row][this.tetromino.column + col] = this.tetromino.name;
 			}
 		}
 		this.processFilledRow();
 		this.generateTetromino();
+	}
+
+	isOutsideOfTopBoard(row) {
+		return this.tetromino.row + row < 0;
 	}
 
 	processFilledRow() {
@@ -111,5 +141,16 @@ export class Tetris {
 			this.playfield[row] = this.playfield[row - 1];
 		}
 		this.playfield[0] = new Array(PLAYFIELD_COLUMNS).fill(0);
+	}
+
+	calculateGhostPosition() {
+		const tetrominoRow = this.tetromino.row;
+		this.tetromino.row++;
+		while (this.isValid()) {
+			this.tetromino.row++;
+		}
+		this.tetromino.ghostRow = this.tetromino.row - 1;
+		this.tetromino.ghostColumn = this.tetromino.column;
+		this.tetromino.row = tetrominoRow;
 	}
 }

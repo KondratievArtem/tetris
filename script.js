@@ -1,11 +1,13 @@
 import { Tetris } from './tetris.js';
-import { PLAYFIELD_ROWS, PLAYFIELD_COLUMNS, convertPositionToIndex } from './utilities.js';
+import { PLAYFIELD_ROWS, PLAYFIELD_COLUMNS, SAD, convertPositionToIndex } from './utilities.js';
+let hammer;
 let requestId;
 let timeoutId;
 const tetris = new Tetris();
 const cells = document.querySelectorAll('.grid>div');
 
 initKeydown();
+initTouch();
 moveDown();
 
 function initKeydown() {
@@ -27,9 +29,59 @@ function onKeydown(event) {
 			moveRight();
 			break;
 
+		case ' ':
+			dropDown();
+			break;
 		default:
 			break;
 	}
+}
+
+function initTouch() {
+	document.addEventListener('dblclick', (event) => {
+		event.preventDefault();
+	});
+
+	hammer = new Hammer(document.querySelector('body'));
+	hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+	hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+
+	const threshold = 30;
+	let deltaX = 0;
+	let deltaY = 0;
+
+	hammer.on('panstart', () => {
+		deltaX = 0;
+		deltaY = 0;
+	});
+
+	hammer.on('panleft', (event) => {
+		if (Math.abs(event.deltaX - deltaX) > threshold) {
+			moveLeft();
+			deltaX = event.deltaX;
+			deltaY = event.deltaY;
+		}
+	});
+	hammer.on('panright', (event) => {
+		if (Math.abs(event.deltaX - deltaX) > threshold) {
+			moveRight();
+			deltaX = event.deltaX;
+			deltaY = event.deltaY;
+		}
+	});
+	hammer.on('pandown', (event) => {
+		if (Math.abs(event.deltaY - deltaY) > threshold) {
+			moveDown();
+			deltaX = event.deltaX;
+			deltaY = event.deltaY;
+		}
+	});
+	hammer.on('swipedown', (event) => {
+		dropDown();
+	});
+	hammer.on('tap', () => {
+		rotate();
+	});
 }
 
 function moveDown() {
@@ -37,6 +89,10 @@ function moveDown() {
 	draw();
 	stopLoop();
 	startLoop();
+
+	if (tetris.isGameOver) {
+		gameOver();
+	}
 }
 function moveLeft() {
 	tetris.moveTetrominoLeft();
@@ -50,6 +106,16 @@ function rotate() {
 	tetris.rotateTetromino();
 	draw();
 }
+function dropDown() {
+	tetris.dropTetrominoDown();
+	draw();
+	startLoop();
+	startLoop();
+
+	if (tetris.isGameOver) {
+		gameOver();
+	}
+}
 function startLoop() {
 	timeoutId = setTimeout(() => (requestId = requestAnimationFrame(moveDown)), 700);
 }
@@ -62,6 +128,7 @@ function draw() {
 	cells.forEach((cell) => cell.removeAttribute('class'));
 	drawPlayfield();
 	drawTetromino();
+	drawGhostTetromino();
 }
 
 function drawPlayfield() {
@@ -84,6 +151,46 @@ function drawTetromino() {
 			if (tetris.tetromino.row + row < 0) continue;
 			const cellIndex = convertPositionToIndex(tetris.tetromino.row + row, tetris.tetromino.column + col);
 			cells[cellIndex].classList.add(name);
+		}
+	}
+}
+
+function drawGhostTetromino() {
+	const tetrominoMatrixSize = tetris.tetromino.matrix.length;
+	for (let row = 0; row < tetrominoMatrixSize; row++) {
+		for (let col = 0; col < tetrominoMatrixSize; col++) {
+			if (!tetris.tetromino.matrix[row][col]) continue;
+			if (tetris.tetromino.ghostRow + row < 0) continue;
+			const cellIndex = convertPositionToIndex(tetris.tetromino.ghostRow + row, tetris.tetromino.ghostColumn + col);
+			cells[cellIndex].classList.add('ghost');
+		}
+	}
+}
+
+function gameOver() {
+	stopLoop();
+	document.removeEventListener('keydown', onKeydown);
+	hammer.off('panstart panleft panright pandown swipedown tap');
+	gameOverAnimation();
+}
+
+function gameOverAnimation() {
+	const filledCells = [...cells].filter((cell) => cell.classList.length > 0);
+	filledCells.forEach((cell, i) => {
+		setTimeout(() => cell.classList.add('hide'), i * 10);
+		setTimeout(() => cell.removeAttribute('class'), i * 10 + 500);
+	});
+
+	setTimeout(drawSad, filledCells.length * 10 + 1000);
+}
+
+function drawSad() {
+	const TOP_OFFSET = 5;
+	for (let row = 0; row < SAD.length; row++) {
+		for (let col = 0; col < SAD.length; col++) {
+			if (!SAD[row][col]) continue;
+			const cellIndex = convertPositionToIndex(TOP_OFFSET + row, col);
+			cells[cellIndex].classList.add('sad');
 		}
 	}
 }
